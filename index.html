@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Gradus - System Architecture Diagram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 2rem;
+            overscroll-behavior-y: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: #1a1a1a;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        .diagram-container {
+            background: white;
+            border-radius: 12px;
+            padding: 3rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Mobile View Toggle */
+        .view-toggle {
+            display: none;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .toggle-buttons {
+            display: flex;
+            gap: 0.5rem;
+            width: 100%;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-btn.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+
+        /* Mobile List View */
+        .mobile-list-view {
+            display: none;
+        }
+
+        .mobile-category {
+            margin-bottom: 1.5rem;
+        }
+
+        .mobile-category-title {
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.75rem;
+            padding: 0.5rem;
+            background: #f5f5f5;
+            border-radius: 6px;
+        }
+
+        .mobile-node {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .architecture {
+            min-width: 1400px;
+            min-height: 1100px;
+            position: relative;
+            padding: 2rem;
+            background: #fafafa;
+            border-radius: 8px;
+        }
+
+        /* Node Styles */
+        .node {
+            position: absolute;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            min-width: 180px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .node:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+            border-color: #6366f1;
+        }
+
+        .node-header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .node-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .node-title {
+            font-weight: 700;
+            color: #1a1a1a;
+            font-size: 0.95rem;
+        }
+
+        .node-description {
+            font-size: 0.8rem;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .node-tech {
+            margin-top: 0.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .tech-badge {
+            background: #f0f0f0;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            color: #555;
+            font-weight: 600;
+        }
+
+        /* Node Type Colors */
+        .node-source .node-icon {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .node-processing .node-icon {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+        }
+
+        .node-storage .node-icon {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .node-output .node-icon {
+            background: linear-gradient(135deg, #ec4899, #db2777);
+        }
+
+        .node-ai .node-icon {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        }
+
+        .node-infra .node-icon {
+            background: linear-gradient(135deg, #64748b, #475569);
+        }
+
+        .node-scheduler .node-icon {
+            background: linear-gradient(135deg, #14b8a6, #0d9488);
+        }
+
+        /* Connection Lines */
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .connection {
+            fill: none;
+            stroke: #9ca3af;
+            stroke-width: 2.5;
+            marker-end: url(#arrowhead);
+            opacity: 0.6;
+        }
+
+        .connection-active {
+            stroke: #6366f1;
+            stroke-width: 3.5;
+            opacity: 0.8;
+        }
+
+        .connection-data {
+            stroke: #10b981;
+            stroke-width: 3;
+            opacity: 0.7;
+        }
+
+        .connection-api {
+            stroke: #8b5cf6;
+            stroke-width: 3;
+            opacity: 0.7;
+        }
+
+        /* Layer Labels */
+        .layer-label {
+            position: absolute;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            z-index: 5;
+            background: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* Legend */
+        .legend {
+            margin-top: 3rem;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .legend h3 {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #1a1a1a;
+            margin-bottom: 0.5rem;
+        }
+
+        .legend-section {
+            margin-bottom: 2rem;
+        }
+
+        .legend-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+        }
+
+        .legend-text {
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        /* Metrics */
+        .metrics {
+            margin-top: 3rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #6366f1;
+            margin-bottom: 0.3rem;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.75rem;
+            }
+
+            .header p {
+                font-size: 0.9rem;
+                line-height: 1.4;
+            }
+
+            .diagram-container {
+                padding: 1rem;
+                border-radius: 8px;
+            }
+
+            .view-toggle {
+                display: block;
+            }
+
+            /* Diagram view - pinch to zoom enabled */
+            .architecture {
+                touch-action: pan-x pan-y pinch-zoom;
+            }
+
+            /* Hide diagram in list view */
+            .architecture.hidden {
+                display: none;
+            }
+
+            .mobile-list-view.active {
+                display: block;
+            }
+
+            .legend {
+                padding: 1rem;
+            }
+
+            .legend h3 {
+                font-size: 1.1rem;
+            }
+
+            .legend-grid {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            .metrics {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+
+            .metric-card {
+                padding: 1rem;
+            }
+
+            .metric-value {
+                font-size: 1.5rem;
+            }
+
+            .metric-label {
+                font-size: 0.8rem;
+            }
+
+            /* Optimize node interactions for touch */
+            .node {
+                min-width: 160px;
+                padding: 0.875rem 1.25rem;
+            }
+
+            .node:active {
+                transform: scale(0.98);
+            }
+        }
+
+        /* Larger phones */
+        @media (max-width: 480px) {
+            body {
+                padding: 0.75rem;
+            }
+
+            .header {
+                margin-bottom: 1.5rem;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .header p {
+                font-size: 0.85rem;
+            }
+
+            .metrics {
+                grid-template-columns: 1fr;
+            }
+
+            .diagram-container {
+                padding: 0.75rem;
+            }
+
+            .legend {
+                padding: 0.75rem;
+            }
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #1a1a1a;
+            }
+
+            .diagram-container {
+                background: #2d2d2d;
+            }
+
+            .header h1 {
+                color: #f5f5f5;
+            }
+
+            .header p {
+                color: #a0a0a0;
+            }
+
+            .node {
+                background: #3a3a3a;
+                border-color: #4a4a4a;
+            }
+
+            .node-title {
+                color: #f5f5f5;
+            }
+
+            .node-description {
+                color: #a0a0a0;
+            }
+
+            .tech-badge {
+                background: #4a4a4a;
+                color: #d0d0d0;
+            }
+
+            .legend {
+                background: #2d2d2d;
+                border-color: #4a4a4a;
+            }
+
+            .legend h3 {
+                color: #f5f5f5;
+            }
+
+            .legend-text {
+                color: #a0a0a0;
+            }
+
+            .metric-card {
+                background: #2d2d2d;
+            }
+
+            .metric-label {
+                color: #a0a0a0;
+            }
+
+            .architecture {
+                background: #252525;
+            }
+
+            .layer-label {
+                background: #3a3a3a;
+                color: #a0a0a0;
+            }
+
+            .view-toggle {
+                background: #2d2d2d;
+            }
+
+            .toggle-btn {
+                background: #3a3a3a;
+                border-color: #4a4a4a;
+                color: #f5f5f5;
+            }
+
+            .toggle-btn.active {
+                background: #6366f1;
+                border-color: #6366f1;
+            }
+
+            .mobile-category-title {
+                background: #3a3a3a;
+                color: #a0a0a0;
+            }
+
+            .mobile-node {
+                background: #3a3a3a;
+                border-color: #4a4a4a;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AI Gradus - System Architecture</h1>
+        <p>Multi-Agent Platform for Ukraine's HoReCa Industry | Designed by Konstantin Kovalchuk</p>
+    </div>
+
+    <div class="diagram-container">
+        <!-- View Toggle for Mobile -->
+        <div class="view-toggle">
+            <div class="toggle-buttons">
+                <button class="toggle-btn active" onclick="switchView('diagram')">📊 Diagram</button>
+                <button class="toggle-btn" onclick="switchView('list')">📋 List</button>
+            </div>
+        </div>
+
+        <!-- Mobile List View -->
+        <div class="mobile-list-view" id="mobileList">
+            <div class="mobile-category">
+                <div class="mobile-category-title">📥 Data Sources</div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">📰</div>
+                        <div class="node-title">The Spirits Business</div>
+                    </div>
+                    <div class="node-description">International beverage news</div>
+                </div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">🍺</div>
+                        <div class="node-title">Just Drinks</div>
+                    </div>
+                    <div class="node-description">Beverage industry insights</div>
+                </div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">🥃</div>
+                        <div class="node-title">Class Magazine</div>
+                    </div>
+                    <div class="node-description">Bar & cocktail content</div>
+                </div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">🇺🇦</div>
+                        <div class="node-title">Delo.ua</div>
+                    </div>
+                    <div class="node-description">Ukrainian business news</div>
+                </div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">🏨</div>
+                        <div class="node-title">HoReCa-Україна</div>
+                    </div>
+                    <div class="node-description">Hospitality industry news</div>
+                </div>
+            </div>
+
+            <div class="mobile-category">
+                <div class="mobile-category-title">⚙️ Processing Layer</div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">🔄</div>
+                        <div class="node-title">Content Scraper</div>
+                    </div>
+                    <div class="node-description">Multi-source aggregation with duplicate detection</div>
+                    <div class="node-tech">
+                        <span class="tech-badge">Python</span>
+                        <span class="tech-badge">BeautifulSoup</span>
+                        <span class="tech-badge">Requests</span>
+                    </div>
+                </div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">🌐</div>
+                        <div class="node-title">Translator</div>
+                    </div>
+                    <div class="node-description">English to Ukrainian translation</div>
+                    <div class="node-tech">
+                        <span class="tech-badge">Claude API</span>
+                    </div>
+                </div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">🎨</div>
+                        <div class="node-title">Image Generator</div>
+                    </div>
+                    <div class="node-description">AI prompt creation & image generation</div>
+                    <div class="node-tech">
+                        <span class="tech-badge">DALL-E 3</span>
+                        <span class="tech-badge">Claude</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mobile-category">
+                <div class="mobile-category-title">🤖 AI Services</div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">🤖</div>
+                        <div class="node-title">Claude API</div>
+                    </div>
+                    <div class="node-description">Translation, content generation, prompt creation</div>
+                    <div class="node-tech">
+                        <span class="tech-badge">Sonnet 4</span>
+                        <span class="tech-badge">Haiku</span>
+                    </div>
+                </div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">🎭</div>
+                        <div class="node-title">OpenAI</div>
+                    </div>
+                    <div class="node-description">Image generation & embeddings</div>
+                    <div class="node-tech">
+                        <span class="tech-badge">DALL-E 3</span>
+                        <span class="tech-badge">Embeddings</span>
+                    </div>
+                </div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">🧠</div>
+                        <div class="node-title">Pinecone</div>
+                    </div>
+                    <div class="node-description">Vector database for RAG</div>
+                    <div class="node-tech">
+                        <span class="tech-badge">Serverless</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mobile-category">
+                <div class="mobile-category-title">💾 Storage Systems</div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">🗄️</div>
+                        <div class="node-title">PostgreSQL</div>
+                    </div>
+                    <div class="node-description">Article metadata, user data, approval states</div>
+                    <div class="node-tech">
+                        <span class="tech-badge">SQLAlchemy</span>
+                    </div>
+                </div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">📁</div>
+                        <div class="node-title">File System</div>
+                    </div>
+                    <div class="node-description">Generated images, static assets</div>
+                    <div class="node-tech">
+                        <span class="tech-badge">/attached_assets</span>
+                    </div>
+                </div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">🔍</div>
+                        <div class="node-title">Vector Store</div>
+                    </div>
+                    <div class="node-description">RAG knowledge base for agents</div>
+                    <div class="node-tech">
+                        <span class="tech-badge">Pinecone</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mobile-category">
+                <div class="mobile-category-title">🤖 AI Agents</div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">📰</div>
+                        <div class="node-title">GradusMedia Agent</div>
+                    </div>
+                    <div class="node-description">B2B content platform automation</div>
+                    <div class="node-tech">
+                        <span class="tech-badge">FastAPI</span>
+                        <span class="tech-badge">React</span>
+                    </div>
+                </div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">👤</div>
+                        <div class="node-title">Maya AI Agent</div>
+                    </div>
+                    <div class="node-description">HR assistant for 800+ employees</div>
+                    <div class="node-tech">
+                        <span class="tech-badge">RAG</span>
+                        <span class="tech-badge">Messenger</span>
+                    </div>
+                </div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">🚀</div>
+                        <div class="node-title">Gradus AI Agent</div>
+                    </div>
+                    <div class="node-description">4-stage enterprise platform</div>
+                    <div class="node-tech">
+                        <span class="tech-badge">Multi-Stage</span>
+                        <span class="tech-badge">B2B SaaS</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mobile-category">
+                <div class="mobile-category-title">📤 Distribution Channels</div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">📘</div>
+                        <div class="node-title">Facebook</div>
+                    </div>
+                    <div class="node-description">Auto-posting at 18:00 UTC</div>
+                    <div class="node-tech">
+                        <span class="tech-badge">Graph API</span>
+                    </div>
+                </div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">💼</div>
+                        <div class="node-title">LinkedIn</div>
+                    </div>
+                    <div class="node-description">Professional network distribution</div>
+                    <div class="node-tech">
+                        <span class="tech-badge">API</span>
+                    </div>
+                </div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">✈️</div>
+                        <div class="node-title">Telegram</div>
+                    </div>
+                    <div class="node-description">Approval workflow notifications</div>
+                    <div class="node-tech">
+                        <span class="tech-badge">Bot API</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mobile-category">
+                <div class="mobile-category-title">⏰ Orchestration</div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">⏰</div>
+                        <div class="node-title">APScheduler</div>
+                    </div>
+                    <div class="node-description">Cron jobs: 02:00 scrape, 06:00/14:00/20:00 translate, 18:00 post</div>
+                    <div class="node-tech">
+                        <span class="tech-badge">AsyncIO</span>
+                        <span class="tech-badge">ThreadPool</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mobile-category">
+                <div class="mobile-category-title">☁️ Infrastructure</div>
+                <div class="mobile-node">
+                    <div class="node-header">
+                        <div class="node-icon">☁️</div>
+                        <div class="node-title">Infrastructure</div>
+                    </div>
+                    <div class="node-description">Hosting & deployment</div>
+                    <div class="node-tech">
+                        <span class="tech-badge">Render.com</span>
+                        <span class="tech-badge">Cloudflare</span>
+                        <span class="tech-badge">Docker</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="architecture" id="diagramView">
+            <!-- SVG for connections -->
+            <svg width="100%" height="1100px">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#9ca3af" />
+                    </marker>
+                    <marker id="arrowhead-data" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#10b981" />
+                    </marker>
+                    <marker id="arrowhead-api" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#8b5cf6" />
+                    </marker>
+                    <marker id="arrowhead-active" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#6366f1" />
+                    </marker>
+                </defs>
+
+                <!-- Data Sources to Processing -->
+                <path class="connection connection-data" d="M 190 100 L 400 200" marker-end="url(#arrowhead-data)" />
+                <path class="connection connection-data" d="M 190 200 L 400 200" marker-end="url(#arrowhead-data)" />
+                <path class="connection connection-data" d="M 190 300 L 400 250" marker-end="url(#arrowhead-data)" />
+                <path class="connection connection-data" d="M 190 400 L 400 300" marker-end="url(#arrowhead-data)" />
+                <path class="connection connection-data" d="M 190 500 L 400 350" marker-end="url(#arrowhead-data)" />
+
+                <!-- Processing to AI Services -->
+                <path class="connection connection-api" d="M 590 200 L 800 150" marker-end="url(#arrowhead-api)" />
+                <path class="connection connection-api" d="M 590 250 L 800 200" marker-end="url(#arrowhead-api)" />
+                <path class="connection connection-api" d="M 590 300 L 800 250" marker-end="url(#arrowhead-api)" />
+
+                <!-- AI Services to Storage -->
+                <path class="connection" d="M 990 150 L 1200 250" marker-end="url(#arrowhead)" />
+                <path class="connection" d="M 990 200 L 1200 300" marker-end="url(#arrowhead)" />
+                <path class="connection" d="M 990 250 L 1200 350" marker-end="url(#arrowhead)" />
+
+                <!-- Storage to Agents -->
+                <path class="connection" d="M 1390 300 L 400 550" marker-end="url(#arrowhead)" />
+                <path class="connection" d="M 1390 300 L 400 650" marker-end="url(#arrowhead)" />
+                <path class="connection" d="M 1390 300 L 400 750" marker-end="url(#arrowhead)" />
+
+                <!-- Agents to Output -->
+                <path class="connection" d="M 590 600 L 800 550" marker-end="url(#arrowhead)" />
+                <path class="connection" d="M 590 700 L 800 600" marker-end="url(#arrowhead)" />
+                <path class="connection" d="M 590 800 L 800 650" marker-end="url(#arrowhead)" />
+
+                <!-- Scheduler connections -->
+                <path class="connection connection-active" d="M 700 900 L 500 300" marker-end="url(#arrowhead-active)" />
+                <path class="connection connection-active" d="M 700 900 L 900 250" marker-end="url(#arrowhead-active)" />
+                <path class="connection connection-active" d="M 700 900 L 500 700" marker-end="url(#arrowhead-active)" />
+
+                <!-- Infrastructure -->
+                <path class="connection" d="M 1200 800 L 500 300" marker-end="url(#arrowhead)" />
+                <path class="connection" d="M 1200 800 L 900 250" marker-end="url(#arrowhead)" />
+                <path class="connection" d="M 1200 800 L 500 700" marker-end="url(#arrowhead)" />
+            </svg>
+
+            <!-- Layer Labels -->
+            <div class="layer-label" style="top: 0; left: 100px;">Data Sources</div>
+            <div class="layer-label" style="top: 0; left: 420px;">Processing</div>
+            <div class="layer-label" style="top: 0; left: 820px;">AI Services</div>
+            <div class="layer-label" style="top: 0; left: 1220px;">Storage</div>
+            <div class="layer-label" style="top: 480px; left: 420px;">AI Agents</div>
+            <div class="layer-label" style="top: 480px; left: 820px;">Distribution</div>
+
+            <!-- DATA SOURCES LAYER -->
+            <div class="node node-source" style="top: 80px; left: 20px;">
+                <div class="node-header">
+                    <div class="node-icon">📰</div>
+                    <div class="node-title">The Spirits Business</div>
+                </div>
+                <div class="node-description">International beverage news</div>
+            </div>
+
+            <div class="node node-source" style="top: 180px; left: 20px;">
+                <div class="node-header">
+                    <div class="node-icon">🍺</div>
+                    <div class="node-title">Just Drinks</div>
+                </div>
+                <div class="node-description">Beverage industry insights</div>
+            </div>
+
+            <div class="node node-source" style="top: 280px; left: 20px;">
+                <div class="node-header">
+                    <div class="node-icon">🥃</div>
+                    <div class="node-title">Class Magazine</div>
+                </div>
+                <div class="node-description">Bar & cocktail content</div>
+            </div>
+
+            <div class="node node-source" style="top: 380px; left: 20px;">
+                <div class="node-header">
+                    <div class="node-icon">🇺🇦</div>
+                    <div class="node-title">Delo.ua</div>
+                </div>
+                <div class="node-description">Ukrainian business news</div>
+            </div>
+
+            <div class="node node-source" style="top: 480px; left: 20px;">
+                <div class="node-header">
+                    <div class="node-icon">🏨</div>
+                    <div class="node-title">HoReCa-Україна</div>
+                </div>
+                <div class="node-description">Hospitality industry news</div>
+            </div>
+
+            <!-- PROCESSING LAYER -->
+            <div class="node node-processing" style="top: 180px; left: 400px;">
+                <div class="node-header">
+                    <div class="node-icon">🔄</div>
+                    <div class="node-title">Content Scraper</div>
+                </div>
+                <div class="node-description">Multi-source aggregation with duplicate detection</div>
+                <div class="node-tech">
+                    <span class="tech-badge">Python</span>
+                    <span class="tech-badge">BeautifulSoup</span>
+                    <span class="tech-badge">Requests</span>
+                </div>
+            </div>
+
+            <div class="node node-processing" style="top: 280px; left: 400px;">
+                <div class="node-header">
+                    <div class="node-icon">🌐</div>
+                    <div class="node-title">Translator</div>
+                </div>
+                <div class="node-description">English to Ukrainian translation</div>
+                <div class="node-tech">
+                    <span class="tech-badge">Claude API</span>
+                </div>
+            </div>
+
+            <div class="node node-processing" style="top: 380px; left: 400px;">
+                <div class="node-header">
+                    <div class="node-icon">🎨</div>
+                    <div class="node-title">Image Generator</div>
+                </div>
+                <div class="node-description">AI prompt creation & image generation</div>
+                <div class="node-tech">
+                    <span class="tech-badge">DALL-E 3</span>
+                    <span class="tech-badge">Claude</span>
+                </div>
+            </div>
+
+            <!-- AI SERVICES LAYER -->
+            <div class="node node-ai" style="top: 130px; left: 800px;">
+                <div class="node-header">
+                    <div class="node-icon">🤖</div>
+                    <div class="node-title">Claude API</div>
+                </div>
+                <div class="node-description">Translation, content generation, prompt creation</div>
+                <div class="node-tech">
+                    <span class="tech-badge">Sonnet 4</span>
+                    <span class="tech-badge">Haiku</span>
+                </div>
+            </div>
+
+            <div class="node node-ai" style="top: 230px; left: 800px;">
+                <div class="node-header">
+                    <div class="node-icon">🎭</div>
+                    <div class="node-title">OpenAI</div>
+                </div>
+                <div class="node-description">Image generation & embeddings</div>
+                <div class="node-tech">
+                    <span class="tech-badge">DALL-E 3</span>
+                    <span class="tech-badge">Embeddings</span>
+                </div>
+            </div>
+
+            <div class="node node-ai" style="top: 330px; left: 800px;">
+                <div class="node-header">
+                    <div class="node-icon">🧠</div>
+                    <div class="node-title">Pinecone</div>
+                </div>
+                <div class="node-description">Vector database for RAG</div>
+                <div class="node-tech">
+                    <span class="tech-badge">Serverless</span>
+                </div>
+            </div>
+
+            <!-- STORAGE LAYER -->
+            <div class="node node-storage" style="top: 230px; left: 1200px;">
+                <div class="node-header">
+                    <div class="node-icon">🗄️</div>
+                    <div class="node-title">PostgreSQL</div>
+                </div>
+                <div class="node-description">Article metadata, user data, approval states</div>
+                <div class="node-tech">
+                    <span class="tech-badge">SQLAlchemy</span>
+                </div>
+            </div>
+
+            <div class="node node-storage" style="top: 330px; left: 1200px;">
+                <div class="node-header">
+                    <div class="node-icon">📁</div>
+                    <div class="node-title">File System</div>
+                </div>
+                <div class="node-description">Generated images, static assets</div>
+                <div class="node-tech">
+                    <span class="tech-badge">/attached_assets</span>
+                </div>
+            </div>
+
+            <div class="node node-storage" style="top: 430px; left: 1200px;">
+                <div class="node-header">
+                    <div class="node-icon">🔍</div>
+                    <div class="node-title">Vector Store</div>
+                </div>
+                <div class="node-description">RAG knowledge base for agents</div>
+                <div class="node-tech">
+                    <span class="tech-badge">Pinecone</span>
+                </div>
+            </div>
+
+            <!-- AI AGENTS LAYER -->
+            <div class="node node-processing" style="top: 530px; left: 400px;">
+                <div class="node-header">
+                    <div class="node-icon">📰</div>
+                    <div class="node-title">GradusMedia Agent</div>
+                </div>
+                <div class="node-description">B2B content platform automation</div>
+                <div class="node-tech">
+                    <span class="tech-badge">FastAPI</span>
+                    <span class="tech-badge">React</span>
+                </div>
+            </div>
+
+            <div class="node node-processing" style="top: 630px; left: 400px;">
+                <div class="node-header">
+                    <div class="node-icon">👤</div>
+                    <div class="node-title">Maya AI Agent</div>
+                </div>
+                <div class="node-description">HR assistant for 800+ employees</div>
+                <div class="node-tech">
+                    <span class="tech-badge">RAG</span>
+                    <span class="tech-badge">Messenger</span>
+                </div>
+            </div>
+
+            <div class="node node-processing" style="top: 730px; left: 400px;">
+                <div class="node-header">
+                    <div class="node-icon">🚀</div>
+                    <div class="node-title">Gradus AI Agent</div>
+                </div>
+                <div class="node-description">4-stage enterprise platform</div>
+                <div class="node-tech">
+                    <span class="tech-badge">Multi-Stage</span>
+                    <span class="tech-badge">B2B SaaS</span>
+                </div>
+            </div>
+
+            <!-- OUTPUT LAYER -->
+            <div class="node node-output" style="top: 530px; left: 800px;">
+                <div class="node-header">
+                    <div class="node-icon">📘</div>
+                    <div class="node-title">Facebook</div>
+                </div>
+                <div class="node-description">Auto-posting at 18:00 UTC</div>
+                <div class="node-tech">
+                    <span class="tech-badge">Graph API</span>
+                </div>
+            </div>
+
+            <div class="node node-output" style="top: 630px; left: 800px;">
+                <div class="node-header">
+                    <div class="node-icon">💼</div>
+                    <div class="node-title">LinkedIn</div>
+                </div>
+                <div class="node-description">Professional network distribution</div>
+                <div class="node-tech">
+                    <span class="tech-badge">API</span>
+                </div>
+            </div>
+
+            <div class="node node-output" style="top: 730px; left: 800px;">
+                <div class="node-header">
+                    <div class="node-icon">✈️</div>
+                    <div class="node-title">Telegram</div>
+                </div>
+                <div class="node-description">Approval workflow notifications</div>
+                <div class="node-tech">
+                    <span class="tech-badge">Bot API</span>
+                </div>
+            </div>
+
+            <!-- SCHEDULER -->
+            <div class="node node-scheduler" style="top: 880px; left: 550px;">
+                <div class="node-header">
+                    <div class="node-icon">⏰</div>
+                    <div class="node-title">APScheduler</div>
+                </div>
+                <div class="node-description">Cron jobs: 02:00 scrape, 06:00/14:00/20:00 translate, 18:00 post</div>
+                <div class="node-tech">
+                    <span class="tech-badge">AsyncIO</span>
+                    <span class="tech-badge">ThreadPool</span>
+                </div>
+            </div>
+
+            <!-- INFRASTRUCTURE -->
+            <div class="node node-infra" style="top: 780px; left: 1200px;">
+                <div class="node-header">
+                    <div class="node-icon">☁️</div>
+                    <div class="node-title">Infrastructure</div>
+                </div>
+                <div class="node-description">Hosting & deployment</div>
+                <div class="node-tech">
+                    <span class="tech-badge">Render.com</span>
+                    <span class="tech-badge">Cloudflare</span>
+                    <span class="tech-badge">Docker</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-section">
+                <h3>Component Types</h3>
+                <div class="legend-grid">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: linear-gradient(135deg, #10b981, #059669);"></div>
+                        <div class="legend-text">Data Sources</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: linear-gradient(135deg, #6366f1, #4f46e5);"></div>
+                        <div class="legend-text">Processing Nodes</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);"></div>
+                        <div class="legend-text">AI Services</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: linear-gradient(135deg, #f59e0b, #d97706);"></div>
+                        <div class="legend-text">Storage Systems</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: linear-gradient(135deg, #ec4899, #db2777);"></div>
+                        <div class="legend-text">Output Channels</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: linear-gradient(135deg, #14b8a6, #0d9488);"></div>
+                        <div class="legend-text">Orchestration</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: linear-gradient(135deg, #64748b, #475569);"></div>
+                        <div class="legend-text">Infrastructure</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="legend-section">
+                <h3 style="margin-top: 1.5rem;">Data Flow Types</h3>
+                <div class="legend-grid">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #10b981; width: 40px; height: 3px;"></div>
+                        <div class="legend-text">Content Data Flow</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #8b5cf6; width: 40px; height: 3px;"></div>
+                        <div class="legend-text">API Calls</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #6366f1; width: 40px; height: 3px;"></div>
+                        <div class="legend-text">Orchestration</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #9ca3af; width: 40px; height: 3px;"></div>
+                        <div class="legend-text">Standard Flow</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Metrics -->
+    <div class="diagram-container" style="margin-top: 2rem;">
+        <div class="metrics">
+            <div class="metric-card">
+                <div class="metric-value">5</div>
+                <div class="metric-label">Content Sources</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">3</div>
+                <div class="metric-label">AI Service Providers</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">3</div>
+                <div class="metric-label">Autonomous Agents</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">3</div>
+                <div class="metric-label">Distribution Channels</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">7</div>
+                <div class="metric-label">Daily Scheduled Jobs</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">24/7</div>
+                <div class="metric-label">Autonomous Operation</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add interactivity
+        document.querySelectorAll('.node').forEach(node => {
+            node.addEventListener('mouseenter', function() {
+                this.style.zIndex = '100';
+            });
+
+            node.addEventListener('mouseleave', function() {
+                this.style.zIndex = '1';
+            });
+        });
+
+        // View toggle for mobile
+        function switchView(view) {
+            const diagramView = document.getElementById('diagramView');
+            const mobileList = document.getElementById('mobileList');
+            const buttons = document.querySelectorAll('.toggle-btn');
+
+            if (view === 'diagram') {
+                diagramView.classList.remove('hidden');
+                mobileList.classList.remove('active');
+                buttons[0].classList.add('active');
+                buttons[1].classList.remove('active');
+            } else {
+                diagramView.classList.add('hidden');
+                mobileList.classList.add('active');
+                buttons[0].classList.remove('active');
+                buttons[1].classList.add('active');
+            }
+        }
+
+        // Smooth scroll on mobile
+        if ('scrollBehavior' in document.documentElement.style) {
+            document.documentElement.style.scrollBehavior = 'smooth';
+        }
+
+        // Prevent zoom on double tap (iOS)
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+
+        // Add visual feedback for touch interactions
+        document.querySelectorAll('.mobile-node, .toggle-btn').forEach(element => {
+            element.addEventListener('touchstart', function() {
+                this.style.opacity = '0.7';
+            });
+
+            element.addEventListener('touchend', function() {
+                this.style.opacity = '1';
+            });
+
+            element.addEventListener('touchcancel', function() {
+                this.style.opacity = '1';
+            });
+        });
+    </script>
+</body>
+</html>
